@@ -4,6 +4,7 @@
   }
 
   const { prompt } = req.body;
+  console.log("prompt received:", prompt);
   if (!prompt) {
     return res.status(400).json({ error: "prompt is required" });
   }
