@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   if (!prompt) {
     return res.status(400).json({ error: "prompt is required" });
   }
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.notenkey;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
   }
