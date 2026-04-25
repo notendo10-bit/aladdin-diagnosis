@@ -9,6 +9,7 @@
   }
 
   const apiKey = process.env.GOOGLE_API_KEY;
+  console.log("API KEY exists:", !!process.env.GOOGLE_API_KEY);
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
   }
