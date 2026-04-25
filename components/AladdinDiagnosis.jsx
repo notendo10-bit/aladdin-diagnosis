@@ -289,9 +289,7 @@ setSpinning(true);
       if (!TYPES[parsed.type]) parsed.type = TYPE_KEYS[Math.floor(Math.random() * TYPE_KEYS.length)];
       if (parsed.second && !TYPES[parsed.second]) parsed.second = null;
       // API完了 → ルーレット開始
-      setLoading(false);
       setPendingResult(parsed);
-      setSpinning(true);
     } catch (e) {
       setError("エラーが発生しました。もう一度お試しください。");
       setLoading(false);
