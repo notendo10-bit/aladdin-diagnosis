@@ -31,9 +31,10 @@
 
     const data = await response.json();
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || "API error" });
-    }
+if (!response.ok) {
+  console.log("Gemini error detail:", JSON.stringify(data));
+  return res.status(response.status).json({ error: data.error?.message || "API error" });
+}
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
     return res.status(200).json({ text });
