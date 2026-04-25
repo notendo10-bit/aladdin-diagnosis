@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from "react";
 
 const LANGS = {
   ja: {
-    title: "君のポストで思想タイプ診断",
+    title: "ポストで思想タイプ診断",
     sub: "あなたはどんな偉人タイプ？",
     profileLabel: "Xのプロフィールも読む（任意）",
     profilePlaceholder: "プロフィール文を貼り付けると精度が上がります",
     placeholder: "ポスト",
     addBtn: "+ ポストを追加する",
-    diagnoseBtn: "🪄 思想タイプを診断する",
+    diagnoseBtn: "🪄 タイプを診断する",
     diagnosing: "🪄 AIが分析中...",
     spinning: "🎡 タイプを判定中...",
     hint: "12タイプの偉人から判定します",
@@ -272,7 +272,8 @@ export default function App() {
 
   const diagnose = async () => {
     if (validPosts.length === 0) { setError(L.error); return; }
-    setError(""); setLoading(true); setResult(null); setPendingResult(null);
+    setError(""); setLoading(false); setResult(null); setPendingResult(null);
+setSpinning(true);
     try {
       const prompt = buildPrompt(validPosts, profile);
       const res = await fetch("/api/diagnose", {
