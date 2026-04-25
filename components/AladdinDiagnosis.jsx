@@ -283,8 +283,10 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "API error");
       const text = data.text || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+     　const clean = text.replace(/```json|```/g, "").trim();
+　　　　const jsonMatch = clean.match(/\{[\s\S]*\}/);
+　　　　if (!jsonMatch) throw new Error("JSON not found");
+　　　　const parsed = JSON.parse(jsonMatch[0]);
       if (!TYPES[parsed.type]) parsed.type = TYPE_KEYS[Math.floor(Math.random() * TYPE_KEYS.length)];
       if (parsed.second && !TYPES[parsed.second]) parsed.second = null;
       // API完了 → ルーレット開始
