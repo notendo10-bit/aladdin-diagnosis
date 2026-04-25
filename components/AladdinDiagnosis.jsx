@@ -272,8 +272,7 @@ export default function App() {
 
   const diagnose = async () => {
     if (validPosts.length === 0) { setError(L.error); return; }
-    setError(""); setLoading(false); setResult(null); setPendingResult(null);
-setSpinning(true);
+    setError(""); setLoading(true); setResult(null); setPendingResult(null);
     try {
       const prompt = buildPrompt(validPosts, profile);
       const res = await fetch("/api/diagnose", {
@@ -289,7 +288,9 @@ setSpinning(true);
       if (!TYPES[parsed.type]) parsed.type = TYPE_KEYS[Math.floor(Math.random() * TYPE_KEYS.length)];
       if (parsed.second && !TYPES[parsed.second]) parsed.second = null;
       // API完了 → ルーレット開始
-      setPendingResult(parsed);
+      setLoading(false);
+　　　setPendingResult(parsed);
+　　　setSpinning(true);
     } catch (e) {
       setError("エラーが発生しました。もう一度お試しください。");
       setLoading(false);
