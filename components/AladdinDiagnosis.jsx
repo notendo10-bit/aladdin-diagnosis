@@ -291,10 +291,11 @@ export default function App() {
       setLoading(false);
 　　　setPendingResult(parsed);
 　　　setSpinning(true);
-    } catch (e) {
-      setError("エラーが発生しました。もう一度お試しください。");
-      setLoading(false);
-    }
+} catch (e) {
+  console.log("Catch error:", e.message);
+  setError("エラーが発生しました。もう一度お試しください。");
+  setLoading(false);
+}
   };
 
   const handleRouletteDone = () => {
