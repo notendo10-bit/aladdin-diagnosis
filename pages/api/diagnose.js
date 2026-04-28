@@ -6,29 +6,30 @@ export default async function handler(req, res) {
   if (!prompt) {
     return res.status(400).json({ error: "prompt is required" });
   }
-  const apiKey = process.env.notenkey;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: "API key not configured" });
   }
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "claude-haiku-4-5",
         max_tokens: 500,
         messages: [{ role: "user", content: prompt }],
       }),
     });
     const data = await response.json();
     if (!response.ok) {
-      console.log("Groq error:", JSON.stringify(data));
+      console.log("Anthropic error:", JSON.stringify(data));
       return res.status(response.status).json({ error: data.error?.message || "API error" });
     }
-    const text = data.choices?.[0]?.message?.content || "";
+    const text = data.content?.[0]?.text || "";
     return res.status(200).json({ text });
   } catch (e) {
     console.log("Internal error:", e.message);
