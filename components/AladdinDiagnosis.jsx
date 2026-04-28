@@ -93,45 +93,59 @@ function generateShareImage(type) {
   canvas.width = 1080;
   canvas.height = 1080;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#06061a";
-  ctx.fillRect(0, 0, 1080, 1080);
-  ctx.strokeStyle = type.color;
-  ctx.lineWidth = 8;
-  ctx.strokeRect(40, 40, 1000, 1000);
-  ctx.strokeStyle = "#FFD700";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(60, 60, 960, 960);
-  ctx.font = "180px serif";
-  ctx.textAlign = "center";
-  ctx.fillText(type.emoji, 540, 320);
-  ctx.font = "32px sans-serif";
-  ctx.fillStyle = "#888888";
-  ctx.fillText("YOUR TYPE", 540, 420);
-  ctx.font = "bold 96px sans-serif";
-  ctx.fillStyle = type.color;
-  ctx.fillText(type.name, 540, 540);
-  ctx.font = "44px sans-serif";
-  ctx.fillStyle = "#cccccc";
-  ctx.fillText(type.sub, 540, 620);
-  ctx.font = "36px sans-serif";
-  ctx.fillStyle = "#FFD700";
-  ctx.fillText(type.keyword.join("  ·  "), 540, 710);
-  ctx.strokeStyle = "#333333";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(140, 760);
-  ctx.lineTo(940, 760);
-  ctx.stroke();
-  ctx.font = "32px sans-serif";
-  ctx.fillStyle = "#888888";
-  ctx.fillText("#思想タイプ診断  #現人神アラジン", 540, 840);
-  ctx.font = "28px sans-serif";
-  ctx.fillStyle = "#555555";
-  ctx.fillText("aladdin-diagnosis.vercel.app", 540, 900);
-  const link = document.createElement("a");
-  link.download = `aladdin-${type.nameEn.toLowerCase()}.png`;
-  link.href = canvas.toDataURL("image/png");
-  link.click();
+
+  const draw = () => {
+    ctx.fillStyle = "#06061a";
+    ctx.fillRect(0, 0, 1080, 1080);
+    ctx.strokeStyle = type.color;
+    ctx.lineWidth = 8;
+    ctx.strokeRect(40, 40, 1000, 1000);
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(60, 60, 960, 960);
+    ctx.font = "32px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#888888";
+    ctx.fillText("YOUR TYPE", 540, 120);
+    ctx.font = "bold 80px sans-serif";
+    ctx.fillStyle = type.color;
+    ctx.fillText(type.name, 540, 220);
+    ctx.font = "36px sans-serif";
+    ctx.fillStyle = "#cccccc";
+    ctx.fillText(type.sub, 540, 290);
+    ctx.strokeStyle = "#333333";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(140, 320);
+    ctx.lineTo(940, 320);
+    ctx.stroke();
+    ctx.font = "32px sans-serif";
+    ctx.fillStyle = "#888888";
+    ctx.fillText("#思想タイプ診断  #現人神アラジン", 540, 980);
+    ctx.font = "24px sans-serif";
+    ctx.fillStyle = "#555555";
+    ctx.fillText("aladdin-diagnosis.vercel.app", 540, 1030);
+    const link = document.createElement("a");
+    link.download = `aladdin-${type.nameEn.toLowerCase()}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+
+  if (type.img) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      ctx.drawImage(img, 80, 330, 920, 620);
+      draw();
+    };
+    img.onerror = draw;
+    img.src = type.img;
+  } else {
+    ctx.font = "180px serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffffff";
+    draw();
+  }
 }
 
 export default function App() {
@@ -234,7 +248,7 @@ export default function App() {
         <div style={{ padding: "0 1rem", paddingTop: "1rem" }}>
           <div style={{ background: "#06061a", borderRadius: "16px", marginBottom: "16px", textAlign: "center", border: `2px solid ${t.color}`, overflow: "hidden" }}>
             {t.img && (
-              <img src={t.img} alt={t.name} style={{ width: "100%", maxHeight: "280px", objectFit: "cover", objectPosition: "top", display: "block" }} />
+              <img src={t.img} alt={t.name} style={{ width: "100%", maxHeight: "280px", objectFit: "cover", objectPosition: "center", display: "block" }} />
             )}
             <div style={{ padding: "1.5rem" }}>
               <p style={{ color: "#aaa", fontSize: "12px", margin: "0 0 12px", letterSpacing: "2px" }}>YOUR TYPE</p>
