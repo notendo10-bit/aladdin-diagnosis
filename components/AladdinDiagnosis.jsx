@@ -4,16 +4,12 @@ const LANGS = {
   ja: {
     title: "ポストで思想タイプ診断",
     sub: "あなたはどんな偉人タイプ？",
-    profileLabel: "Xのプロフィールも読む（任意）",
-    profilePlaceholder: "プロフィール文を貼り付けると精度が上がります",
-    placeholder: "ポスト",
-    addBtn: "+ ポストを追加する",
+    placeholder: ["ポスト1を貼り付け", "ポスト2を貼り付け", "ポスト3を貼り付け（任意）"],
     diagnoseBtn: "🪄 タイプを診断する",
     diagnosing: "🪄 AIが分析中...",
     spinning: "🎡 タイプを判定中...",
     hint: "12タイプの偉人から判定します",
-    inputHint: "Xのポストを貼り付けてください",
-    profileHint: "プロフィールも合わせると精度アップ",
+    inputHint: "Xのポストを貼り付けてください（1〜3件）",
     error: "ポストを1つ以上入力してください",
     yourType: "YOUR TYPE",
     secondType: "次点タイプ",
@@ -29,16 +25,12 @@ const LANGS = {
   en: {
     title: "Diagnose Your Thought Type",
     sub: "Which great thinker are you?",
-    profileLabel: "Also read X profile (optional)",
-    profilePlaceholder: "Paste your profile bio for a more accurate reading",
-    placeholder: "Post",
-    addBtn: "+ Add another post",
+    placeholder: ["Paste post 1", "Paste post 2", "Paste post 3 (optional)"],
     diagnoseBtn: "🪄 Diagnose My Type",
     diagnosing: "🪄 AI Analyzing...",
     spinning: "🎡 Determining your type...",
     hint: "Matched to 12 great thinker types",
-    inputHint: "Paste your X posts below",
-    profileHint: "Adding your bio boosts accuracy",
+    inputHint: "Paste your X posts (1–3)",
     error: "Please enter at least one post",
     yourType: "YOUR TYPE",
     secondType: "Runner-up",
@@ -54,16 +46,12 @@ const LANGS = {
   zh: {
     title: "用你的帖子诊断思想类型",
     sub: "你是哪位伟人类型？",
-    profileLabel: "也读取X简介（可选）",
-    profilePlaceholder: "粘贴您的简介可以提高判定精度",
-    placeholder: "帖子",
-    addBtn: "+ 添加帖子",
+    placeholder: ["粘贴帖子1", "粘贴帖子2", "粘贴帖子3（可选）"],
     diagnoseBtn: "🪄 诊断我的类型",
     diagnosing: "🪄 AI分析中...",
     spinning: "🎡 判定中...",
     hint: "从12种伟人类型中判定",
-    inputHint: "请粘贴您的X帖子",
-    profileHint: "加入简介可提升精度",
+    inputHint: "请粘贴您的X帖子（1〜3条）",
     error: "请至少输入一条帖子",
     yourType: "你的类型",
     secondType: "次选类型",
@@ -79,16 +67,12 @@ const LANGS = {
   ko: {
     title: "포스트로 사상 유형 진단",
     sub: "당신은 어떤 위인 유형?",
-    profileLabel: "X 프로필도 읽기 (선택)",
-    profilePlaceholder: "프로필을 붙여넣으면 정확도가 높아집니다",
-    placeholder: "포스트",
-    addBtn: "+ 포스트 추가",
+    placeholder: ["포스트 1 붙여넣기", "포스트 2 붙여넣기", "포스트 3 붙여넣기（선택）"],
     diagnoseBtn: "🪄 사상 유형 진단하기",
     diagnosing: "🪄 AI 분석 중...",
     spinning: "🎡 유형 판정 중...",
     hint: "12가지 위인 유형 중 판정",
-    inputHint: "X 포스트를 붙여넣으세요",
-    profileHint: "프로필 추가로 정확도 향상",
+    inputHint: "X 포스트를 붙여넣으세요（1〜3개）",
     error: "포스트를 하나 이상 입력해주세요",
     yourType: "YOUR TYPE",
     secondType: "차점 유형",
@@ -120,21 +104,20 @@ const TYPES = {
 
 const TYPE_KEYS = Object.keys(TYPES);
 
-function buildPrompt(posts, profile) {
+function buildPrompt(posts) {
   const typeList = TYPE_KEYS.map(k => `${k}:${TYPES[k].name}(${TYPES[k].sub})`).join(", ");
   const postsText = posts.map((p, i) => `${i + 1}. ${p}`).join("\n");
-  const profileSection = profile.trim() ? `\nProfile bio:\n${profile.trim()}\n` : "";
-  return `You are an expert in philosophy and intellectual history. Analyze the following social media posts${profile.trim() ? " and profile bio" : ""} to determine which philosophical archetype best matches this person's worldview.
+  return `You are an expert in philosophy and intellectual history. Analyze the following social media posts to determine which philosophical archetype best matches this person's worldview.
 
 CRITICAL RULES:
-- Do NOT default to "marx" just because someone criticizes society or inequality. Many thinkers critique society differently.
+- Do NOT default to "marx" just because someone criticizes society or inequality.
 - marx = class struggle, means of production, structural capitalism analysis
 - rousseau = emotional freedom, nature vs civilization, anti-intellectual passion
 - gandhi = nonviolent METHOD as core belief, soul-force over power
 - mill = utilitarian calculation, greatest happiness principle, liberty as framework
-- Distinguish by TONE and METHOD, not just topic. Short/casual posts: infer underlying values carefully.
+- Distinguish by TONE and METHOD, not just topic.
 - Always provide a "second" type when the person could plausibly be two types.
-${profileSection}
+
 Posts:
 ${postsText}
 
@@ -144,109 +127,51 @@ Reply ONLY with valid JSON, no markdown fences:
 {"type":"key","second":"key or null","reason":"2-3 sentences in the same language as the posts","match":"keyword under 15 chars","score":"high or medium or low"}`;
 }
 
-// ルーレットコンポーネント
 function Roulette({ finalType, onDone }) {
   const [current, setCurrent] = useState(0);
-  const [speed, setSpeed] = useState(80);
-  const [done, setDone] = useState(false);
   const frameRef = useRef(0);
   const startRef = useRef(Date.now());
 
   useEffect(() => {
     const finalIdx = TYPE_KEYS.indexOf(finalType);
     let idx = 0;
-    let currentSpeed = 60;
-    let totalTime = 0;
-    const TOTAL_DURATION = 3000; // 3秒でフィニッシュ
+    const TOTAL_DURATION = 2200;
 
     const tick = () => {
-      totalTime = Date.now() - startRef.current;
+      const totalTime = Date.now() - startRef.current;
       const progress = Math.min(totalTime / TOTAL_DURATION, 1);
-
-      // イーズアウト: 最初は速く、後半ゆっくり
-      if (progress < 0.6) {
-        currentSpeed = 60;
-      } else if (progress < 0.8) {
-        currentSpeed = 120;
-      } else if (progress < 0.92) {
-        currentSpeed = 220;
-      } else {
-        currentSpeed = 400;
-      }
+      let currentSpeed;
+      if (progress < 0.5) currentSpeed = 50;
+      else if (progress < 0.75) currentSpeed = 100;
+      else if (progress < 0.9) currentSpeed = 200;
+      else currentSpeed = 350;
 
       if (progress >= 1) {
         setCurrent(finalIdx);
-        setDone(true);
-        setTimeout(() => onDone(), 600);
+        setTimeout(() => onDone(), 500);
         return;
       }
-
       idx = (idx + 1) % TYPE_KEYS.length;
       setCurrent(idx);
       frameRef.current = setTimeout(tick, currentSpeed);
     };
 
-    frameRef.current = setTimeout(tick, currentSpeed);
+    frameRef.current = setTimeout(tick, 50);
     return () => clearTimeout(frameRef.current);
   }, [finalType, onDone]);
 
   const t = TYPES[TYPE_KEYS[current]];
   return (
-    <div style={{
-      background: "#06061a",
-      borderRadius: "20px",
-      padding: "2.5rem 1.5rem",
-      textAlign: "center",
-      margin: "1rem",
-      border: done ? `2px solid ${t.color}` : "2px solid #FFD700",
-      transition: "border-color 0.3s",
-    }}>
+    <div style={{ background: "#06061a", borderRadius: "20px", padding: "2.5rem 1.5rem", textAlign: "center", margin: "1rem", border: "2px solid #FFD700" }}>
       <p style={{ color: "#FFD700", fontSize: "12px", letterSpacing: "3px", margin: "0 0 1.5rem" }}>🎡 ANALYZING...</p>
-
-      {/* スロットウィンドウ */}
-      <div style={{
-        background: "rgba(255,255,255,0.04)",
-        borderRadius: "16px",
-        padding: "1.5rem",
-        margin: "0 auto 1.5rem",
-        border: "0.5px solid rgba(255,255,255,0.1)",
-        position: "relative",
-        overflow: "hidden",
-      }}>
-        {/* 上下のグラデーションマスク */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "40px",
-          background: "linear-gradient(to bottom, #06061a, transparent)",
-          zIndex: 1, pointerEvents: "none"
-        }}/>
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "40px",
-          background: "linear-gradient(to top, #06061a, transparent)",
-          zIndex: 1, pointerEvents: "none"
-        }}/>
-
+      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: "16px", padding: "1.5rem", margin: "0 auto 1.5rem", border: "0.5px solid rgba(255,255,255,0.1)" }}>
         <div style={{ fontSize: "3.5rem", marginBottom: "8px", lineHeight: 1 }}>{t.emoji}</div>
-        <div style={{
-          color: done ? t.color : "#FFD700",
-          fontSize: "18px",
-          fontWeight: "600",
-          margin: "0 0 4px",
-          transition: "color 0.2s",
-          minHeight: "28px",
-        }}>
-          {t.name}
-        </div>
+        <div style={{ color: "#FFD700", fontSize: "18px", fontWeight: "600", margin: "0 0 4px", minHeight: "28px" }}>{t.name}</div>
         <div style={{ color: "#888", fontSize: "12px" }}>{t.sub}</div>
       </div>
-
-      {/* タイプ一覧ドット */}
       <div style={{ display: "flex", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
         {TYPE_KEYS.map((k, i) => (
-          <div key={k} style={{
-            width: "8px", height: "8px", borderRadius: "50%",
-            background: i === current ? TYPES[k].color : "rgba(255,255,255,0.15)",
-            transition: "background 0.1s",
-          }}/>
+          <div key={k} style={{ width: "8px", height: "8px", borderRadius: "50%", background: i === current ? TYPES[k].color : "rgba(255,255,255,0.15)", transition: "background 0.1s" }}/>
         ))}
       </div>
     </div>
@@ -255,26 +180,22 @@ function Roulette({ finalType, onDone }) {
 
 export default function App() {
   const [posts, setPosts] = useState(["", "", ""]);
-  const [profile, setProfile] = useState("");
-  const [showProfile, setShowProfile] = useState(false);
   const [result, setResult] = useState(null);
-  const [pendingResult, setPendingResult] = useState(null); // API完了後、ルーレット中は保持
+  const [pendingResult, setPendingResult] = useState(null);
   const [spinning, setSpinning] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lang, setLang] = useState("ja");
   const L = LANGS[lang];
 
-  const addPost = () => { if (posts.length < 10) setPosts([...posts, ""]); };
   const updatePost = (i, v) => { const n = [...posts]; n[i] = v; setPosts(n); };
-  const removePost = (i) => { if (posts.length > 1) setPosts(posts.filter((_, idx) => idx !== i)); };
   const validPosts = posts.filter(p => p.trim().length > 0);
 
   const diagnose = async () => {
     if (validPosts.length === 0) { setError(L.error); return; }
     setError(""); setLoading(true); setResult(null); setPendingResult(null);
     try {
-      const prompt = buildPrompt(validPosts, profile);
+      const prompt = buildPrompt(validPosts);
       const res = await fetch("/api/diagnose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -283,21 +204,19 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "API error");
       const text = data.text || "";
-     　const clean = text.replace(/```json|```/g, "").trim();
-　　　　const jsonMatch = clean.match(/\{[\s\S]*\}/);
-　　　　if (!jsonMatch) throw new Error("JSON not found");
-　　　　const parsed = JSON.parse(jsonMatch[0]);
+      const clean = text.replace(/```json|```/g, "").trim();
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("JSON not found");
+      const parsed = JSON.parse(jsonMatch[0]);
       if (!TYPES[parsed.type]) parsed.type = TYPE_KEYS[Math.floor(Math.random() * TYPE_KEYS.length)];
       if (parsed.second && !TYPES[parsed.second]) parsed.second = null;
-      // API完了 → ルーレット開始
       setLoading(false);
-　　　setPendingResult(parsed);
-　　　setSpinning(true);
-} catch (e) {
-  console.log("Catch error:", e.message);
-  setError("エラーが発生しました。もう一度お試しください。");
-  setLoading(false);
-}
+      setPendingResult(parsed);
+      setSpinning(true);
+    } catch (e) {
+      setError("エラーが発生しました。もう一度お試しください。");
+      setLoading(false);
+    }
   };
 
   const handleRouletteDone = () => {
@@ -309,7 +228,7 @@ export default function App() {
   const t = result ? TYPES[result.type] : null;
   const tSecond = result?.second ? TYPES[result.second] : null;
   const shareText = result ? L.shareText(t?.name, t?.sub, tSecond?.name) : "";
-  const reset = () => { setResult(null); setPendingResult(null); setSpinning(false); setPosts(["", "", ""]); setProfile(""); setShowProfile(false); };
+  const reset = () => { setResult(null); setPendingResult(null); setSpinning(false); setPosts(["", "", ""]); };
 
   const langBtns = ["ja", "en", "zh", "ko"];
   const langLabels = { ja: "日本語", en: "English", zh: "中文", ko: "한국어" };
@@ -325,7 +244,6 @@ export default function App() {
         ))}
       </div>
 
-      {/* === ルーレット中 === */}
       {spinning && pendingResult && (
         <div style={{ paddingTop: "1rem" }}>
           <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", textAlign: "center", margin: "0 0 8px" }}>{L.spinning}</p>
@@ -333,7 +251,6 @@ export default function App() {
         </div>
       )}
 
-      {/* === 入力フォーム === */}
       {!result && !spinning && (
         <>
           <div style={{ background: "#06061a", padding: "1.5rem", borderRadius: "0 0 24px 24px", marginBottom: "1.5rem" }}>
@@ -345,39 +262,19 @@ export default function App() {
           </div>
 
           <div style={{ padding: "0 1rem" }}>
-            <div style={{ marginBottom: "16px", background: "var(--color-background-secondary)", borderRadius: "10px", overflow: "hidden", border: "0.5px solid var(--color-border-secondary)" }}>
-              <button onClick={() => setShowProfile(!showProfile)}
-                style={{ width: "100%", background: "none", border: "none", cursor: "pointer", color: "var(--color-text-secondary)", fontSize: "13px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px", textAlign: "left" }}>
-                <span style={{ color: "#FFD700" }}>🔍</span>
-                {L.profileLabel}
-                <span style={{ marginLeft: "auto", fontSize: "16px", color: "#FFD700" }}>{showProfile ? "▾" : "▸"}</span>
-              </button>
-              {showProfile && (
-                <div style={{ padding: "0 14px 12px" }}>
-                  <p style={{ color: "var(--color-text-tertiary)", fontSize: "11px", margin: "0 0 6px" }}>{L.profileHint}</p>
-                  <textarea value={profile} onChange={e => setProfile(e.target.value)} placeholder={L.profilePlaceholder}
-                    style={{ width: "100%", minHeight: "64px", fontSize: "13px", resize: "vertical", padding: "10px", borderRadius: "8px", border: "0.5px solid #FFD70066", background: "var(--color-background-primary)", color: "var(--color-text-primary)", fontFamily: "var(--font-sans)", boxSizing: "border-box" }} />
-                </div>
-              )}
-            </div>
-
             <p style={{ color: "var(--color-text-secondary)", fontSize: "13px", marginBottom: "12px" }}>
-              {L.inputHint}（{validPosts.length}）
+              {L.inputHint}（{validPosts.length}/3）
             </p>
             {posts.map((p, i) => (
-              <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "10px", alignItems: "flex-start" }}>
-                <textarea value={p} onChange={e => updatePost(i, e.target.value)} placeholder={`${L.placeholder} ${i + 1}`}
-                  style={{ flex: 1, minHeight: "72px", fontSize: "14px", resize: "vertical", padding: "10px", borderRadius: "8px", border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", fontFamily: "var(--font-sans)" }} />
-                {posts.length > 1 && (
-                  <button onClick={() => removePost(i)} style={{ background: "none", border: "0.5px solid var(--color-border-secondary)", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", color: "var(--color-text-secondary)", fontSize: "16px", marginTop: "4px" }}>×</button>
-                )}
+              <div key={i} style={{ marginBottom: "10px" }}>
+                <textarea
+                  value={p}
+                  onChange={e => updatePost(i, e.target.value)}
+                  placeholder={L.placeholder[i]}
+                  style={{ width: "100%", minHeight: "80px", fontSize: "14px", resize: "vertical", padding: "10px", borderRadius: "8px", border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", fontFamily: "var(--font-sans)", boxSizing: "border-box" }}
+                />
               </div>
             ))}
-            {posts.length < 10 && (
-              <button onClick={addPost} style={{ width: "100%", padding: "10px", border: "0.5px dashed var(--color-border-secondary)", borderRadius: "8px", background: "none", color: "var(--color-text-secondary)", fontSize: "13px", cursor: "pointer", marginBottom: "16px" }}>
-                {L.addBtn}
-              </button>
-            )}
             {error && <p style={{ color: "var(--color-text-danger)", fontSize: "13px", marginBottom: "12px" }}>{error}</p>}
             <button onClick={diagnose} disabled={loading || validPosts.length === 0}
               style={{ width: "100%", padding: "14px", background: loading ? "#333" : "#06061a", color: "#FFD700", border: "2px solid #FFD700", borderRadius: "12px", fontSize: "16px", fontWeight: "500", cursor: loading ? "default" : "pointer" }}>
@@ -388,7 +285,6 @@ export default function App() {
         </>
       )}
 
-      {/* === 結果表示 === */}
       {result && (
         <div style={{ padding: "0 1rem", paddingTop: "1rem" }}>
           <div style={{ background: "#06061a", padding: "1.5rem", borderRadius: "16px", marginBottom: "16px", textAlign: "center", border: `2px solid ${t.color}` }}>
